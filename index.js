@@ -2,7 +2,18 @@ const express = require('express');
 const app = express();
 
 app.get('/', (req, res) => {
-  res.send('Hola mundo desde Express');
+  res.send('API funcionando');
+});
+
+// Este es tu nuevo endpoint
+app.get('/usuario', (req, res) => {
+  const usuario = {
+    id: 1,
+    nombre: 'Angel Noe Santos',
+    rol: 'Desarrollador Backend'
+  };
+
+  res.json(usuario);
 });
 
 app.listen(3000, () => {
