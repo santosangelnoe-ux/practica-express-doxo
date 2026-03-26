@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/santosangelnoe-ux/practica-express-doxo#readme",
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "pg": "^8.20.0"
   }
 }
