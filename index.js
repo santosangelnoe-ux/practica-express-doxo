@@ -2,7 +2,6 @@ const express = require('express');
 const pool = require('./db');
 const app = express();
 
-// IMPORTANTE: Esto permite recibir datos JSON desde Postman
 app.use(express.json());
 
 pool.connect()
@@ -47,7 +46,31 @@ app.post('/alumnos', async (req, res) => {
     res.status(500).json({ error: 'Error al insertar el alumno' });
   }
 });
-// NUEVAS RUTAS PARA LA TABLA: materia
+
+app.get('/alumnos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'El id debe ser numérico' });
+    }
+
+    const resultado = await pool.query(
+      'SELECT * FROM alumno WHERE id = $1',
+      [id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Alumno no encontrado' });
+    }
+
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    console.error('Error al consultar alumno:', error);
+    res.status(500).json({ error: 'Error al obtener el alumno' });
+  }
+});
+
 app.get('/materias', async (req, res) => {
   try {
     const resultado = await pool.query('SELECT * FROM materia');
@@ -57,11 +80,10 @@ app.get('/materias', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener las materias' });
   }
 });
+
 app.post('/materias', async (req, res) => {
   try {
     const { nombre, semestre, creditos } = req.body;
-
-    // Validación básica
     if (!nombre || !semestre || !creditos) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
@@ -80,6 +102,31 @@ app.post('/materias', async (req, res) => {
     res.status(500).json({ error: 'Error al insertar la materia' });
   }
 });
+
+app.get('/materias/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'El id debe ser numérico' });
+    }
+
+    const resultado = await pool.query(
+      'SELECT * FROM materia WHERE id = $1',
+      [id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Materia no encontrada' });
+    }
+
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    console.error('Error al consultar materia:', error);
+    res.status(500).json({ error: 'Error al obtener la materia' });
+  }
+});
+
 app.listen(3000, () => {
   console.log('Servidor corriendo en http://localhost:3000');
 });
