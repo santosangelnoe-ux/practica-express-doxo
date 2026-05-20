@@ -4,8 +4,7 @@ CREATE TABLE alumno (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     edad INT,
-    correo VARCHAR(150) UNIQUE,
-	isactive BOOLEAN DEFAULT true
+    correo VARCHAR(150) UNIQUE
 );
 
 CREATE TABLE materia (
@@ -40,4 +39,5 @@ INSERT INTO materia (nombre, semestre, creditos) VALUES
 INSERT INTO alumno_materia (alumno_id, materia_id) VALUES
 (1, 1), (1, 2), (2, 1), (2, 3), (3, 2), (3, 4), (4, 1), (4, 4), (5, 2), (5, 3);
 
+ALTER TABLE alumno ADD COLUMN isactive BOOLEAN DEFAULT true;
 UPDATE alumno SET isactive = true WHERE isactive IS NULL;

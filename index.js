@@ -4,7 +4,7 @@ const connectMongoDB = require("./mongoConnection");
 const Vehiculo = require("./Vehiculo"); 
 
 const app = express();
-app.use(express.json());
+app.use(express.json()); // Esto sirve para que express pueda leer el JSON del body
 
 connectMongoDB();
 
@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
   res.send("API funcionando con Postgres y MongoDB");
 });
 
-
+// Consultar todos los alumnos activos
 app.get('/api/getAlumnos', async (req, res) => {
   try {
     const resultado = await pool.query('SELECT * FROM alumno WHERE isactive = true');
@@ -29,6 +29,7 @@ app.get('/api/getAlumnos', async (req, res) => {
   }
 });
 
+// Consultar alumno por ID
 app.get('/api/getAlumnoById/:id', async (req, res) => {
   try {
     const { id } = req.params;
