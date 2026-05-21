@@ -127,6 +127,111 @@ app.get('/materias/:id', async (req, res) => {
   }
 });
 
+app.post('/api/assignMateriaToAlumno', async (req, res) => {
+  try {
+    const { alumno_id, materia_id } = req.body;
+
+    if (!alumno_id || !materia_id) {
+      return res.status(400).json({ message: "Los campos alumno_id y materia_id son obligatorios" });
+    }
+    if (isNaN(alumno_id) || isNaN(materia_id)) {
+      return res.status(400).json({ message: "Los IDs deben ser numéricos" });
+    }
+
+    const checkAlumno = await pool.query('SELECT * FROM alumno WHERE id = $1', [alumno_id]);
+    if (checkAlumno.rows.length === 0) {
+      return res.status(404).json({ message: "El alumno no existe o está inactivo" });
+    }
+
+    const checkMateria = await pool.query('SELECT * FROM materia WHERE id = $1', [materia_id]);
+    if (checkMateria.rows.length === 0) {
+      return res.status(404).json({ message: "La materia no existe" });
+    }
+
+    const checkRelacion = await pool.query(
+      'SELECT * FROM alumno_materia WHERE alumno_id = $1 AND materia_id = $2',
+      [alumno_id, materia_id]
+    );
+    if (checkRelacion.rows.length > 0) {
+      return res.status(400).json({ message: "El alumno ya tiene asignada esta materia" });
+    }
+
+    await pool.query(
+      'INSERT INTO alumno_materia (alumno_id, materia_id) VALUES ($1, $2)',
+      [alumno_id, materia_id]
+    );
+
+    res.status(201).json({
+      message: "Materia asignada al alumno correctamente",
+      data: { alumno_id, materia_id }
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "El ID del alumno debe ser numérico" });
+    }
+
+    const checkAlumno = await pool.query('SELECT * FROM alumno WHERE id = $1', [id]);
+    if (checkAlumno.rows.length === 0) {
+      return res.status(404).json({ message: "El alumno no existe o está inactivo" });
+    }
+
+    const consulta = `
+      SELECT m.id, m.nombre, m.semestre, m.creditos 
+      FROM materia m
+      JOIN alumno_materia am ON m.id = am.materia_id
+      WHERE am.alumno_id = $1
+    `;
+    const resultado = await pool.query(consulta, [id]);
+
+    res.status(200).json({
+      message: "Materias consultadas correctamente",
+      data: resultado.rows
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+app.get('/api/getMateriasCountByAlumnoId/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "El ID del alumno debe ser numérico" });
+    }
+
+    const checkAlumno = await pool.query('SELECT * FROM alumno WHERE id = $1', [id]);
+    if (checkAlumno.rows.length === 0) {
+      return res.status(404).json({ message: "El alumno no existe o está inactivo" });
+    }
+
+    const resultado = await pool.query(
+      'SELECT COUNT(*) FROM alumno_materia WHERE alumno_id = $1',
+      [id]
+    );
+
+    const total = parseInt(resultado.rows[0].count, 10);
+
+    res.status(200).json({
+      message: "Conteo de materias exitoso",
+      data: { total_materias: total }
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
 app.listen(3000, () => {
   console.log('Servidor corriendo en http://localhost:3000');
 });
