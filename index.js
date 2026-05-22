@@ -16,15 +16,28 @@ app.get('/', (req, res) => {
   res.send('API funcionando');
 });
 
-// Ruta GET: Obtener todos los alumnos
+// Punto 5 y 6: Obtener alumnos activos o buscar por nombre/apellido usando LIKE
 app.get('/alumnos', async (req, res) => {
-  try {
-    const resultado = await pool.query('SELECT * FROM alumno');
-    res.json(resultado.rows);
-  } catch (error) {
-    console.error('Error al consultar alumnos:', error);
-    res.status(500).json({ error: 'Error al obtener los alumnos' });
-  }
+    const { search } = req.query; // Captura el parámetro ?search= de la URL
+
+    try {
+        if (search) {
+            const query = `
+                SELECT * FROM alumnos 
+                WHERE isActive = 1 
+                AND (nombre LIKE ? OR apellido LIKE ?)
+            `;
+            const searchParam = `%${search}%`;
+            const [rows] = await db.query(query, [searchParam, searchParam]);
+            return res.json(rows);
+        } else {
+            const [rows] = await db.query('SELECT * FROM alumnos WHERE isActive = 1');
+            return res.json(rows);
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener los alumnos' });
+    }
 });
 
 app.post('/alumnos', async (req, res) => {
@@ -45,6 +58,53 @@ app.post('/alumnos', async (req, res) => {
     console.error('Error al insertar alumno:', error);
     res.status(500).json({ error: 'Error al insertar el alumno' });
   }
+});
+// Punto 7: Modificar un alumno por su ID
+app.put('/alumnos/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nombre, apellido } = req.body; // Datos que vienen del cliente
+
+    if (!nombre || !apellido) {
+        return res.status(400).json({ error: 'El nombre y el apellido son requeridos' });
+    }
+
+    try {
+        const [result] = await db.query(
+            'UPDATE alumnos SET nombre = ?, apellido = ? WHERE id = ?',
+            [nombre, apellido, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Alumno no encontrado' });
+        }
+
+        res.json({ message: 'Alumno actualizado correctamente' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al actualizar el alumno' });
+    }
+});
+
+// Punto 8: Eliminación lógica de alumnos (cambiar isActive a 0)
+app.delete('/alumnos/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+       
+        const [result] = await db.query(
+            'UPDATE alumnos SET isActive = 0 WHERE id = ?',
+            [id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Alumno no encontrado' });
+        }
+
+        res.json({ message: 'Alumno eliminado lógicamente (desactivado) con éxito' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al eliminar lógicamente al alumno' });
+    }
 });
 
 app.get('/alumnos/:id', async (req, res) => {
