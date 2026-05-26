@@ -1,129 +1,135 @@
-const express = require('express');
-const pool = require('./db');
+const express = require("express");
+const connectMongoDB = require("./mongoConnection");
+const pool = require("./db");
 const app = express();
 
+//Conexión a MongoDB
+connectMongoDB();
 app.use(express.json());
 
-pool.connect()
+pool
+  .connect()
   .then(() => {
-    console.log('Conexión exitosa a PostgreSQL');
+    console.log("Conexión exitosa a PostgreSQL");
   })
   .catch((err) => {
-    console.error('Error de conexión:', err);
+    console.error("Error de conexión:", err);
   });
 
-app.get('/', (req, res) => {
-  res.send('API funcionando');
+app.get("/", (req, res) => {
+  res.send("API funcionando");
 });
 
 // Ruta GET: Obtener todos los alumnos
-app.get('/alumnos', async (req, res) => {
+app.get("/alumnos", async (req, res) => {
   try {
-    const resultado = await pool.query('SELECT * FROM alumno');
+    const resultado = await pool.query("SELECT * FROM alumno");
     res.json(resultado.rows);
   } catch (error) {
-    console.error('Error al consultar alumnos:', error);
-    res.status(500).json({ error: 'Error al obtener los alumnos' });
+    console.error("Error al consultar alumnos:", error);
+    res.status(500).json({ error: "Error al obtener los alumnos" });
   }
 });
 
-app.post('/alumnos', async (req, res) => {
+app.post("/alumnos", async (req, res) => {
   try {
     const { nombre, apellido, edad, correo } = req.body;
     if (!nombre || !apellido || !edad || !correo) {
-      return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+      return res
+        .status(400)
+        .json({ error: "Todos los campos son obligatorios" });
     }
     const resultado = await pool.query(
-      'INSERT INTO alumno (nombre, apellido, edad, correo) VALUES ($1, $2, $3, $4) RETURNING *',
-      [nombre, apellido, edad, correo]
+      "INSERT INTO alumno (nombre, apellido, edad, correo) VALUES ($1, $2, $3, $4) RETURNING *",
+      [nombre, apellido, edad, correo],
     );
     res.status(201).json({
-      mensaje: 'Alumno insertado correctamente',
-      alumno: resultado.rows[0]
+      mensaje: "Alumno insertado correctamente",
+      alumno: resultado.rows[0],
     });
   } catch (error) {
-    console.error('Error al insertar alumno:', error);
-    res.status(500).json({ error: 'Error al insertar el alumno' });
+    console.error("Error al insertar alumno:", error);
+    res.status(500).json({ error: "Error al insertar el alumno" });
   }
 });
 
-app.get('/alumnos/:id', async (req, res) => {
+app.get("/alumnos/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
     if (isNaN(id)) {
-      return res.status(400).json({ error: 'El id debe ser numérico' });
+      return res.status(400).json({ error: "El id debe ser numérico" });
     }
 
-    const resultado = await pool.query(
-      'SELECT * FROM alumno WHERE id = $1',
-      [id]
-    );
+    const resultado = await pool.query("SELECT * FROM alumno WHERE id = $1", [
+      id,
+    ]);
 
     if (resultado.rows.length === 0) {
-      return res.status(404).json({ error: 'Alumno no encontrado' });
+      return res.status(404).json({ error: "Alumno no encontrado" });
     }
 
     res.json(resultado.rows[0]);
   } catch (error) {
-    console.error('Error al consultar alumno:', error);
-    res.status(500).json({ error: 'Error al obtener el alumno' });
+    console.error("Error al consultar alumno:", error);
+    res.status(500).json({ error: "Error al obtener el alumno" });
   }
 });
 
-app.get('/materias', async (req, res) => {
+app.get("/materias", async (req, res) => {
   try {
-    const resultado = await pool.query('SELECT * FROM materia');
+    const resultado = await pool.query("SELECT * FROM materia");
     res.json(resultado.rows);
   } catch (error) {
-    console.error('Error al consultar materias:', error);
-    res.status(500).json({ error: 'Error al obtener las materias' });
+    console.error("Error al consultar materias:", error);
+    res.status(500).json({ error: "Error al obtener las materias" });
   }
 });
 
-app.post('/materias', async (req, res) => {
+app.post("/materias", async (req, res) => {
   try {
     const { nombre, semestre, creditos } = req.body;
     if (!nombre || !semestre || !creditos) {
-      return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+      return res
+        .status(400)
+        .json({ error: "Todos los campos son obligatorios" });
     }
 
     const resultado = await pool.query(
-      'INSERT INTO materia (nombre, semestre, creditos) VALUES ($1, $2, $3) RETURNING *',
-      [nombre, semestre, creditos]
+      "INSERT INTO materia (nombre, semestre, creditos) VALUES ($1, $2, $3) RETURNING *",
+      [nombre, semestre, creditos],
     );
 
     res.status(201).json({
-      mensaje: 'Materia insertada correctamente',
-      materia: resultado.rows[0]
+      mensaje: "Materia insertada correctamente",
+      materia: resultado.rows[0],
     });
   } catch (error) {
-    console.error('Error al insertar materia:', error);
-    res.status(500).json({ error: 'Error al insertar la materia' });
+    console.error("Error al insertar materia:", error);
+    res.status(500).json({ error: "Error al insertar la materia" });
   }
 });
 
-app.get('/materias/:id', async (req, res) => {
+app.get("/materias/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
     if (isNaN(id)) {
-      return res.status(400).json({ error: 'El id debe ser numérico' });
+      return res.status(400).json({ error: "El id debe ser numérico" });
     }
 
-    const resultado = await pool.query(
-      'SELECT * FROM materia WHERE id = $1',
-      [id]
-    );
+    const resultado = await pool.query("SELECT * FROM materia WHERE id = $1", [
+      id,
+    ]);
 
     if (resultado.rows.length === 0) {
-      return res.status(404).json({ error: 'Materia no encontrada' });
+      return res.status(404).json({ error: "Materia no encontrada" });
     }
 
     res.json(resultado.rows[0]);
   } catch (error) {
-    console.error('Error al consultar materia:', error);
-    res.status(500).json({ error: 'Error al obtener la materia' });
+    console.error("Error al consultar materia:", error);
+    res.status(500).json({ error: "Error al obtener la materia" });
   }
 });
 
@@ -232,5 +238,61 @@ app.get('/api/getMateriasCountByAlumnoId/:id', async (req, res) => {
   }
 });
 app.listen(3000, () => {
-  console.log('Servidor corriendo en http://localhost:3000');
+  console.log("Servidor corriendo en http://localhost:3000");
+});
+
+//Mongodb Endpoints
+
+const Vehiculo = require("./Vehiculos");
+
+app.get("/api/getVehiculos", async (req, res) => {
+  try {
+    const vehiculos = await Vehiculo.find();
+
+    res.status(200).json({
+      message: "Vehículos consultados correctamente",
+      data: vehiculos,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al consultar vehículos",
+      error: error.message,
+    });
+  }
+});
+
+app.post("/api/createVehiculo", async (req, res) => {
+  try {
+    const { marca, modelo, anio } = req.body;
+
+    if (!marca || !modelo || !anio) {
+      return res.status(400).json({
+        message: "Todos los campos son obligatorios",
+      });
+    }
+
+    if (isNaN(anio)) {
+      return res.status(400).json({
+        message: "El año debe ser numérico",
+      });
+    }
+
+    const nuevoVehiculo = new Vehiculo({
+      marca,
+      modelo,
+      anio,
+    });
+
+    await nuevoVehiculo.save();
+
+    res.status(201).json({
+      message: "Vehículo creado correctamente",
+      data: nuevoVehiculo,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al crear vehículo",
+      error: error.message,
+    });
+  }
 });
