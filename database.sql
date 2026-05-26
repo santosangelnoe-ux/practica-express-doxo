@@ -1,10 +1,11 @@
-
+-- 1. Crear tablas
 CREATE TABLE alumno (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     edad INT,
-    correo VARCHAR(150) UNIQUE
+    correo VARCHAR(150) UNIQUE,
+	isactive BOOLEAN DEFAULT true
 );
 
 CREATE TABLE materia (
@@ -22,6 +23,7 @@ CREATE TABLE alumno_materia (
     FOREIGN KEY (materia_id) REFERENCES materia(id)
 );
 
+-- 2. Insertar datos de prueba
 INSERT INTO alumno (nombre, apellido, edad, correo) VALUES
 ('Juan', 'Pérez', 20, 'juan.perez@correo.com'),
 ('María', 'López', 22, 'maria.lopez@correo.com'),
@@ -36,13 +38,6 @@ INSERT INTO materia (nombre, semestre, creditos) VALUES
 ('Redes', 4, 5);
 
 INSERT INTO alumno_materia (alumno_id, materia_id) VALUES
-(1, 1),
-(1, 2),
-(2, 1),
-(2, 3),
-(3, 2),
-(3, 4),
-(4, 1),
-(4, 4),
-(5, 2),
-(5, 3);
+(1, 1), (1, 2), (2, 1), (2, 3), (3, 2), (3, 4), (4, 1), (4, 4), (5, 2), (5, 3);
+
+UPDATE alumno SET isactive = true WHERE isactive IS NULL;
