@@ -2,6 +2,7 @@ const express = require("express");
 const connectMongoDB = require("./mongoConnection");
 const pool = require("./db");
 const app = express();
+const Vehiculo = require("./Vehiculos");
 
 //Conexión a MongoDB
 connectMongoDB();
@@ -133,61 +134,79 @@ app.get("/materias/:id", async (req, res) => {
   }
 });
 
-app.post('/api/assignMateriaToAlumno', async (req, res) => {
+app.post("/api/assignMateriaToAlumno", async (req, res) => {
   try {
     const { alumno_id, materia_id } = req.body;
 
     if (!alumno_id || !materia_id) {
-      return res.status(400).json({ message: "Los campos alumno_id y materia_id son obligatorios" });
+      return res.status(400).json({
+        message: "Los campos alumno_id y materia_id son obligatorios",
+      });
     }
     if (isNaN(alumno_id) || isNaN(materia_id)) {
       return res.status(400).json({ message: "Los IDs deben ser numéricos" });
     }
 
-    const checkAlumno = await pool.query('SELECT * FROM alumno WHERE id = $1 AND "isActive" = true', [alumno_id]);
+    const checkAlumno = await pool.query(
+      'SELECT * FROM alumno WHERE id = $1 AND "isActive" = true',
+      [alumno_id],
+    );
     if (checkAlumno.rows.length === 0) {
-      return res.status(404).json({ message: "El alumno no existe o está inactivo" });
+      return res
+        .status(404)
+        .json({ message: "El alumno no existe o está inactivo" });
     }
 
-    const checkMateria = await pool.query('SELECT * FROM materia WHERE id = $1', [materia_id]);
+    const checkMateria = await pool.query(
+      "SELECT * FROM materia WHERE id = $1",
+      [materia_id],
+    );
     if (checkMateria.rows.length === 0) {
       return res.status(404).json({ message: "La materia no existe" });
     }
 
     const checkRelacion = await pool.query(
-      'SELECT * FROM alumno_materia WHERE alumno_id = $1 AND materia_id = $2',
-      [alumno_id, materia_id]
+      "SELECT * FROM alumno_materia WHERE alumno_id = $1 AND materia_id = $2",
+      [alumno_id, materia_id],
     );
     if (checkRelacion.rows.length > 0) {
-      return res.status(400).json({ message: "El alumno ya tiene asignada esta materia" });
+      return res
+        .status(400)
+        .json({ message: "El alumno ya tiene asignada esta materia" });
     }
 
     await pool.query(
-      'INSERT INTO alumno_materia (alumno_id, materia_id) VALUES ($1, $2)',
-      [alumno_id, materia_id]
+      "INSERT INTO alumno_materia (alumno_id, materia_id) VALUES ($1, $2)",
+      [alumno_id, materia_id],
     );
 
     res.status(201).json({
       message: "Materia asignada al alumno correctamente",
-      data: { alumno_id, materia_id }
+      data: { alumno_id, materia_id },
     });
-
   } catch (error) {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
 
-app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
+app.get("/api/getMateriasByAlumnoId/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
     if (isNaN(id)) {
-      return res.status(400).json({ message: "El ID del alumno debe ser numérico" });
+      return res
+        .status(400)
+        .json({ message: "El ID del alumno debe ser numérico" });
     }
 
-    const checkAlumno = await pool.query('SELECT * FROM alumno WHERE id = $1 AND "isActive" = true', [id]);
+    const checkAlumno = await pool.query(
+      'SELECT * FROM alumno WHERE id = $1 AND "isActive" = true',
+      [id],
+    );
     if (checkAlumno.rows.length === 0) {
-      return res.status(404).json({ message: "El alumno no existe o está inactivo" });
+      return res
+        .status(404)
+        .json({ message: "El alumno no existe o está inactivo" });
     }
 
     const consulta = `
@@ -200,39 +219,44 @@ app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
 
     res.status(200).json({
       message: "Materias consultadas correctamente",
-      data: resultado.rows
+      data: resultado.rows,
     });
-
   } catch (error) {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
 
-app.get('/api/getMateriasCountByAlumnoId/:id', async (req, res) => {
+app.get("/api/getMateriasCountByAlumnoId/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
     if (isNaN(id)) {
-      return res.status(400).json({ message: "El ID del alumno debe ser numérico" });
+      return res
+        .status(400)
+        .json({ message: "El ID del alumno debe ser numérico" });
     }
 
-    const checkAlumno = await pool.query('SELECT * FROM alumno WHERE id = $1 AND "isActive" = true', [id]);
+    const checkAlumno = await pool.query(
+      'SELECT * FROM alumno WHERE id = $1 AND "isActive" = true',
+      [id],
+    );
     if (checkAlumno.rows.length === 0) {
-      return res.status(404).json({ message: "El alumno no existe o está inactivo" });
+      return res
+        .status(404)
+        .json({ message: "El alumno no existe o está inactivo" });
     }
 
     const resultado = await pool.query(
-      'SELECT COUNT(*) FROM alumno_materia WHERE alumno_id = $1',
-      [id]
+      "SELECT COUNT(*) FROM alumno_materia WHERE alumno_id = $1",
+      [id],
     );
 
     const total = parseInt(resultado.rows[0].count, 10);
 
     res.status(200).json({
       message: "Conteo de materias exitoso",
-      data: { total_materias: total }
+      data: { total_materias: total },
     });
-
   } catch (error) {
     res.status(500).json({ message: "Error interno del servidor" });
   }
@@ -242,8 +266,6 @@ app.listen(3000, () => {
 });
 
 //Mongodb Endpoints
-
-const Vehiculo = require("./Vehiculos");
 
 app.get("/api/getVehiculos", async (req, res) => {
   try {
