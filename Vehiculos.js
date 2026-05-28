@@ -13,6 +13,10 @@ const vehiculoSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  color: {
+    type: String,
+    required: true,
+  },
 });
 
 const Vehiculo = mongoose.model("Vehiculo", vehiculoSchema);

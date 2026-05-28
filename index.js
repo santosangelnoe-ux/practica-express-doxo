@@ -285,9 +285,9 @@ app.get("/api/getVehiculos", async (req, res) => {
 
 app.post("/api/createVehiculo", async (req, res) => {
   try {
-    const { marca, modelo, anio } = req.body;
+    const { marca, modelo, anio, color } = req.body;
 
-    if (!marca || !modelo || !anio) {
+    if (!marca || !modelo || !anio || !color) {
       return res.status(400).json({
         message: "Todos los campos son obligatorios",
       });
@@ -303,6 +303,7 @@ app.post("/api/createVehiculo", async (req, res) => {
       marca,
       modelo,
       anio,
+      color,
     });
 
     await nuevoVehiculo.save();
