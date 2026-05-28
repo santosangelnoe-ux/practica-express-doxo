@@ -77,6 +77,108 @@ app.get("/alumnos/:id", async (req, res) => {
   }
 });
 
+// Endpoint Punto 6: Buscar alumnos por nombre o apellido
+app.get('/api/searchAlumnos', async (req, res) => {
+  try {
+    // 1. Obtenemos el término de búsqueda desde la URL (ej: ?q=noe)
+    const { q } = req.query;
+
+    // 2. Validamos que el usuario sí haya escrito algo a buscar
+    if (!q) {
+      return res.status(400).json({ 
+        message: "Debes incluir un término de búsqueda. Ejemplo: /api/searchAlumnos?q=juan" 
+      });
+    }
+
+    // 3. Construimos la consulta SQL con ILIKE
+    const query = `
+      SELECT * FROM alumno 
+      WHERE (nombre ILIKE $1 OR apellido ILIKE $1)
+      AND "isActive" = true
+    `;
+
+    // 4. Agregamos los comodines (%) para que busque al inicio, en medio o al final del texto
+    const valores = [`%${q}%`];
+
+    // 5. Ejecutamos en la base de datos
+    const result = await pool.query(query, valores);
+
+    // 6. Respondemos con los resultados
+    res.status(200).json({
+      message: "Búsqueda completada",
+      totalEncontrados: result.rowCount,
+      data: result.rows
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error interno al buscar alumnos" });
+  }
+});
+
+// ==========================================
+// Punto 7: Implementar la modificación de alumnos
+// ==========================================
+app.put('/api/alumnos/:id', async (req, res) => {
+  try {
+    // Sacamos el ID de la URL
+    const { id } = req.params;
+    // Sacamos los datos nuevos del Body
+    const { nombre, apellido, edad, correo } = req.body;
+
+    const query = `
+      UPDATE alumno 
+      SET nombre = $1, apellido = $2, edad = $3, correo = $4
+      WHERE id = $5 AND "isActive" = true
+      RETURNING *;
+    `;
+    const valores = [nombre, apellido, edad, correo, id];
+    
+    const result = await pool.query(query, valores);
+
+    // Si rowCount es 0, significa que el alumno no existe o ya está dado de baja
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Alumno no encontrado o está inactivo" });
+    }
+
+    res.status(200).json({ 
+      message: "Alumno actualizado correctamente", 
+      data: result.rows[0] 
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error interno al actualizar alumno" });
+  }
+});
+
+// ==========================================
+// Punto 8: Implementar la eliminación lógica de alumnos
+// ==========================================
+app.delete('/api/alumnos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ELIMINACIÓN LÓGICA: Solo actualizamos isActive a false
+    const query = `
+      UPDATE alumno 
+      SET "isActive" = false
+      WHERE id = $1 AND "isActive" = true
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Alumno no encontrado o ya estaba dado de baja" });
+    }
+
+    res.status(200).json({ message: "Alumno dado de baja exitosamente" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error interno al eliminar alumno" });
+  }
+});
 app.get("/materias", async (req, res) => {
   try {
     const resultado = await pool.query("SELECT * FROM materia");
