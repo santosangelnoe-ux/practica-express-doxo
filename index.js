@@ -6,6 +6,7 @@ const Vehiculo = require("./Vehiculos");
 
 //Conexión a MongoDB
 connectMongoDB();
+
 app.use(express.json());
 
 pool
@@ -261,6 +262,38 @@ app.get("/api/getMateriasCountByAlumnoId/:id", async (req, res) => {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
+
+app.get("/api/searchAlumno", async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query || query.trim() === "") {
+      return res.status(400).json({
+        message:
+          "El parámetro de búsqueda 'query' es obligatorio y no puede estar vacío",
+      });
+    }
+
+    const searchPattern = `%${query}%`;
+
+    const consulta = `
+      SELECT * FROM alumno 
+      WHERE (nombre LIKE $1 OR apellido LIKE $1) 
+      AND "isActive" = true
+    `;
+
+    const resultado = await pool.query(consulta, [searchPattern]);
+
+    res.status(200).json({
+      message: "Búsqueda de alumnos realizada con éxito",
+      data: resultado.rows,
+    });
+  } catch (error) {
+    console.error("Error en la búsqueda de alumnos:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
 app.listen(3000, () => {
   console.log("Servidor corriendo en http://localhost:3000");
 });
